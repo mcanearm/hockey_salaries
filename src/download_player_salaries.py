@@ -1,34 +1,75 @@
+"""
+Downloading data code modified from
+# https://datascience.stackexchange.com/questions/10857/how-to-scrape-a-table-from-a-webpage
+"""
+
 import pandas as pd
 import bs4
 import requests
+import logging
+import time
+import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
-def parse_row(row):
-    cols = row.findAll("td")
-    col_data = {x["data-stat"]: x.text.strip() for x in cols}
-
+def parse_column(col):
+    logger.debug(f"Parsing {col}")
     try:
-        player = row.find("a").text
-    except AttributeError:
-        player_last, player_first = row.find("th").text.split(", ")
-        player = f"{player_first} {player_last}"
+        return col.find("span")["data-num"]
+    except TypeError:
+        pass
 
-    return {"player": player, **col_data}
+    if ":" in col.text:
+        m, s = col.text.split(":")
+        return int(m) * 60 + int(s)
+    else:
+        return col.text.strip()
+
+
+def parse_row(row, header):
+    logger.debug(f"{row}")
+    cols = row.findAll("td")
+    return {colname: parse_column(col) for colname, col in zip(header, cols)}
+
+
+def retrieve_dataframe_from_url(url, year, sleep_time=2):
+    pg = 1
+    season_results = []
+    while pg < 35:
+        params = {
+            "stats-season": year,
+            "pg": pg,
+            "display": "weightkg,heightcm,caphit-percent",
+        }
+        r = requests.get(url, params=params)
+        logger.info(r.url)
+
+        time.sleep(sleep_time)
+
+        players = bs4.BeautifulSoup(r.content, features="html.parser")
+        column_header = players.find("tr", {"class": "column_head"}).findAll("th")
+        rows = players.find("tbody").findAll("tr")
+        if not rows or not column_header:
+            break
+        else:
+            header = [c.text for c in column_header]
+            all_rows = pd.DataFrame([parse_row(row, header) for row in rows])
+            all_rows.columns = header
+            all_rows["SEASON"] = f"{year - 1}-{year}"
+            all_rows = all_rows.replace("-", np.nan)
+            season_results.append(all_rows)
+            pg += 1
+
+    return pd.concat(season_results)
 
 
 if __name__ == "__main__":
-    base_url = "https://www.hockey-reference.com/friv/current_nhl_salaries.cgi"
-    r = requests.get(base_url)
+    logging.basicConfig(level=logging.INFO)
 
-    # https://datascience.stackexchange.com/questions/10857/how-to-scrape-a-table-from-a-webpage
-    players = bs4.BeautifulSoup(r.content)
-    rows = players.find("tbody").findAll("tr")
+    url = "https://www.capfriendly.com/browse/active"
+    years = range(2022, 2010, -1)
 
-    all_rows = pd.DataFrame(map(parse_row, rows))
-    all_rows[["salary", "caphit"]] = (
-        all_rows[["salary", "caphit"]]
-        .apply(lambda x: x.replace("[^0-9]", "", regex=True))
-        .astype(int)
-    )
-
-    all_rows.to_csv("./data/player_salaries_2022.csv", index=False)
+    for year in years:
+        salary_data = retrieve_dataframe_from_url(url, year)
+        salary_data.to_csv(f'./data/salaries_{year}.csv', index=False)
