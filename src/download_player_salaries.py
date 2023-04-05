@@ -13,7 +13,8 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-def parse_column(col):
+def parse_column(colname, col):
+    # not the prettiest 
     logger.debug(f"Parsing {col}")
     try:
         return col.find("span")["data-num"]
@@ -22,9 +23,8 @@ def parse_column(col):
     except KeyError:
         return col.find("span").text
 
-    if ":" in col.text:
-        m, s = col.text.split(":")
-        return int(m) * 60 + int(s)
+    if colname == 'EXTENSION':
+        return "✔" in col.text
     else:
         return col.text.strip()
 
@@ -32,7 +32,7 @@ def parse_column(col):
 def parse_row(row, header):
     logger.debug(f"{row}")
     cols = row.findAll("td")
-    return {colname: parse_column(col) for colname, col in zip(header, cols)}
+    return {colname: parse_column(colname, col) for colname, col in zip(header, cols)}
 
 
 def retrieve_dataframe_from_url(url, year, params=None, sleep_time=2):
