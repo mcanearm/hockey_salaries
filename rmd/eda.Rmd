@@ -1,0 +1,134 @@
+---
+title: "eda.rmd"
+author: "Matt McAnear"
+date: '2023-04-02'
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(dplyr)
+library(data.table)
+library(ggplot2)
+library(teamcolors)
+library(GGally)
+library(stringi)
+```
+
+```{r}
+salaries <- rbindlist(lapply(list.files('../data/salaries', full.names = TRUE), fread))[
+    POS != 'G'
+]
+salaries$PLAYER <- trimws(gsub("^[0-9]+\\.", "", salaries$PLAYER))
+
+clean_name <- function(name) {
+    trimws(tolower(gsub('[^A-z]', '', stringi::stri_trans_general(name, "Latin-ASCII"))))
+    # trimws(tolower(gsub('[^A-z]', '', iconv(name, "latin1", "ASCII", sub=""))))
+}
+
+salaries[, `:=` (
+    'SALARY' = as.numeric(gsub('[^0-9]', '', SALARY)),
+    'AAV' = as.numeric(gsub('[^0-9]', '', AAV)),
+    'BASE SALARY' = as.numeric(gsub('[^0-9]', '', `BASE SALARY`)),
+    'S.BONUS' = as.numeric(gsub('[^0-9]', '', `S.BONUS`)),
+    'P.BONUS' = as.numeric(gsub('[^0-9]', '', `P.BONUS`)),
+    'CAP HIT' = as.numeric(gsub('[^0-9]', '', `CAP HIT`)),
+    'CAP HIT %' = as.numeric(gsub('[^0-9]', '', `CAP HIT %`)),
+    'SEASON' = as.integer(sapply(strsplit(SEASON, '-'), '[', 1)),
+    'SIGNING DATE' = coalesce(
+        as.Date(`SIGNING DATE`, format = '%b %d, %Y'), 
+        as.Date(`SIGNING DATE`, '%b. %d, %Y')
+        ),
+    'merge_name' = clean_name(PLAYER)
+    )
+]
+salaries <- salaries[SALARY > 0]
+salaries[, CNTRCT_AGE := SEASON - year(`SIGNING DATE`)]
+
+player_stats <- fread('../data/all_player_data.csv')[situation == 'all' & position != 'G']
+team_metadata <- fread('../data/team_metadata.csv')
+
+core_stats <- player_stats[,
+    .(
+        playerId, season, name, position, team, games_played, icetime, shifts, onIce_xGoalsPercentage, 
+        offIce_xGoalsPercentage, penalties, faceoffsWon, penalityMinutes, penalityMinutesDrawn, 
+        shotsBlockedByPlayer, I_F_goals, I_F_primaryAssists, I_F_secondaryAssists, I_F_points,
+        I_F_hits, 'merge_name' = clean_name(name)
+     )
+]
+
+core_stats$team <- sapply(core_stats$team, function(x)
+    coalesce(switch(
+        x,
+        S.J = 'SJS',
+        T.B = 'TBL',
+        N.J = "NJD",
+        L.A = "LAK"
+    ),
+    x))
+
+all_player_data <- merge(
+    core_stats,
+    salaries,
+    by.x = c('merge_name', 'season'),
+    by.y = c('merge_name', 'SEASON'),
+    all = TRUE
+)
+full_df <- merge(
+    all_player_data,
+    team_metadata,
+    by.x = 'team',
+    by.y = 'Abbr',
+    all = FALSE
+)
+
+```
+
+The two datasets are not complete - some player's with stats are missing from the salary
+data and vice versa. There are ~11,000 unique contracts.
+
+```{r goals-vs-toi}
+plot_data <- full_df[
+    sample(1:.N, size=1000),
+    .(
+        'salary' = SALARY,
+        'goals' = I_F_goals, 
+        'assists' = I_F_primaryAssists, 
+        'avg_icetime' = icetime/60/games_played, 
+        'points' = I_F_points,
+        Division
+    )
+]
+ggpairs(plot_data, aes(col=Division, alpha=0.5), columns=1:5, progress = FALSE) +
+    theme_bw()
+   
+```
+
+No clear difference between divisions and the relationship of salary vs. points/60, on 
+either offense or defense.
+
+```{r points-per-60}
+ggplot(data = full_df[sample(1:.N, size=2500)], aes(x = SALARY, y = I_F_points/(icetime/3600), col = Division)) +
+    geom_point() +
+    scale_y_log10() + 
+    geom_smooth(method='lm') + 
+    scale_color_brewer(palette='Dark2') +
+    theme_bw() +
+    xlab('Salary') +
+    scale_x_log10(labels = scales::dollar_format(scale=1e-6, suffix='M', accuracy = 0.1)) +
+    ylab('Pts/60') +
+    facet_wrap(~ position) 
+```
+
+
+Many categorical variables, but the ANOVA analysis is overspecified. There is a significant 
+relationship with predictable variables (goals and points)
+
+
+```{r salary-vs-height-weight}
+fit <- lm(data=full_df, log(SALARY) ~ `Division` + EffTaxRate + O6 + I_F_goals*position + I_F_hits*position + penalityMinutes*position)
+summary(fit)
+```
+
+

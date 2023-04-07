@@ -1,0 +1,130 @@
+---
+title: "Project Proposal"
+author: "Matt McAnear, Anthony Paiollil"
+date: '2023-04-07'
+output: pdf_document
+---
+
+
+# Overview
+
+Every fan wants their favorite team to sign the best players. Many blame the cheapness of their 
+team’s owner when they miss out on a star free agent, or when they cannot trade for top talent. 
+But is it that simple? With 32 teams each 
+located in as many cities spread across two countries, certain players may prefer a specific climate, or 
+opt for a state with lower taxes. Some want to set themselves up best for success and playing time, 
+while others just want the best chance to win a Stanley Cup.
+
+The goal of our project is to determine if teams have to pay players more based on these factors and more. If we are able to successfully evaluate this, general managers will be better equipped in negotiations with free agents and understand what it will cost to obtain a player.
+	
+# Data
+
+## Collection
+
+Our data for this project comes from two primary websites that are central repositories of hockey statistics: [moneypuck.com](https://moneypuck.com) for all player statistics, and [capfriendly.com](https://www.capfriendly.com/) for all salary data. Using these sources, we will evaluate three primary types of features on player salaries:
+
+1) **Player-based statistics** - These stats include basic 
+offensive statistics such as goals, points, assists and hits, as well as defensive statistics such as 
+penalty minutes^[Penalty minutes may seem an odd choice of stat, but they are a measure of a player's toughness and willingness to "fight for his team."], hits, and shots blocked. And finally, more advanced stats such as Corsi and Fenwick percentages (both for shot differential) and goals above replacement.
+2) **Contract Features** - The length of contract, type of contract, and clauses included (no-move clause, no trade clause, etc).
+3) **Team Metadata** - The effective tax rate for the average player on a given team, state/province of 
+the team, country in which they play, and whether the teams were part of the "Original Six."^[The first 
+six teams that formed the NHL. These are generally considered prestigious teams with large fan bases.] 
+Teams are organized neatly into two conferences of two divisions each. Each division has 8 teams, roughly geographically clustered. Finally, we may include statistics like number of wins from last season, and an 
+indicator for whether a team has won a championship in the previous season.
+
+Collection is performed through a web-scraper built in Python, 
+using `requests`, `BeautifulSoup4`, and `pandas`.
+
+## Data Issues
+
+Between the two datasets, there are roughly ~11,000 player contract and season pairs. Unsurprisingly, there
+are several players who have no salary information, and many players who have salary information, but 
+no recorded statistics with an NHL team across the two datasets. That being said, the vast majority of 
+NHL players are accounted for. 
+
+Merging the two datasets requires merging on names, which can be difficult, especially due to Unicode 
+characters used in certain names. For that reason, normal misspellings, accent marks, and translation
+inconsistencies reduce the total size of data set. 
+Despite these issues, of the 12,500 players in our dataset with NHL statistics, we have salary information
+on around 11,000, for a missing rate of around 8%. Some analysis will done to see if this affects some 
+teams than others, but a cursory inspection of the data seems to show that the 8% is missing 
+roughly randomly.
+
+
+# Collaboration
+
+In terms of working together, we both are highly invested in the topic and are in constant contact about working together. Specifically, Matt took the duty of scraping the data from the websites, writing functions to clean the data, as well as producing initial exploratory data analysis. This, combined with Anthony’s own EDA work, has served as a solid baseline and well equipped us for the next steps of the project. We plan on meeting multiple times per week to create our prediction models together. We expect that Matt will oversee any advanced programming issues we run into. Writing will be split evenly, probably in a draft/revision format. Modelling and EDA will be done jointly in working sessions. 
+
+We have a Git repository where we will be tracking all code for analysis. Data is stored on 
+Google Drive.
+
+
+# Analysis
+
+## Model
+
+There is a very natural hierarchical structure to the data which we will be utilizing for the analysis.
+We plan to use a hierarchical regression against log salary, with features divided into the categories
+discussed earlier:
+
+1) **Player-based statistics** - Here, we can model the linear effect of shots, goals, etc. among positions - left/right wing, center, and defense. Goalies have been excluded. Grouping in this way makes sense, as some defensemen are often categorized as "offensive" and "defensive" defensemen, and we expect the effect of various statistics to vary among positions.
+2) **Contract Features** - The length of contract, type of contract, and clauses included (no-move clause, no trade clause, etc). These variables will probably be considered independently of any categorical variables and outside of a hierarchy. An exception could be entry level contracts, as there is a hard 
+salary cap on rookie contracts that means no matter what production a rookie is expected to make,
+they cannot realize that full value - especially since they are drafted by whichever team happens
+to be early in the draft that year. Therefore, we expect the coefficients on each player statistic
+to vary according to both position and rookie contract.
+3) **Team Metadata** - This is our deepest level of hierarchy, and we plan to use these directly to estimate salary effects individual to each conference, division, and team. Tax rate, country, and an indicator for original 6 teams will be outside of the hierarchy.
+
+This linear model should be a good first approximation of salary, with high variance. A basic ANOVA has
+shown that some teams (but not many) have significant effects on salary, though the interpretation isn't
+yet clear. Goals and points are predictably highly correlated with salary. Putting each of our variables
+of interest into a standard GLM has been relatively uninformative; predictors move in and out of 
+significance with the inclusion/exclusion of others, with the exception of goals (which is always 
+very predictive). We are hopeful that the Bayesian hierarchical approach will yield better results
+than the naive approaches tried so far.
+
+Once we have the expected salary of a player based on this linear modelling approach, we can then answer
+our research questions in two ways. First, we can examine the estimated effects directly through
+coefficients, e.g. what is the effect of playing for Chicago on one's salary *et cetris paribus*. Next, we can compare the output of the model to the salary that the player is actually signed for, and see if these residuals are correlated with any factors of interest, such as team success, personal growth, weather, taxes, etc.
+
+We plan to fit the model using PyMC. There is no particular reason for this, except that Matt likes the 
+interface more than STAN. This modelling package also allows us to use a JAX based sampler, and as a 
+consequence, would allow us to do full MCMC sampling using a GPU. This may not be strictly necessary,
+but if our model fitting becomes slow, this could be a great way for us to speed up the calculations
+and try more model iterations and changes.
+
+# Potential Difficulties
+
+The data is, to put it mildly, noisy. Of all major sports, hockey is one of the most "random", which
+while fun for the fans, makes drawing conclusions from player statistics more difficult. Many of 
+our predictors are highly correlated, which can make fitting the model and getting stable estimates more difficult. Other than that, we expected data collection and cleaning to be the most difficult part, 
+and that has been resolved.
+
+# Timeline
+
+As the presentation is on the 13th, we will be working hard to get a preliminary Bayesian model completed a couple of days before that point. At this point, we have the following completed:
+
+1) Data gathered, cleaned, and merged
+2) About 70% done on EDA - histograms, scatter plots, GLMs, and summary statistics. Visualizations to
+be finalized by the presentation.
+
+To be completed by 4/10:
+
+1) Full EDA
+2) Initial model of log salary versus simple player stats and single level hierarchy
+3) 90% of the slides
+
+To be completed by 4/17
+
+1) Draft of paper intro, summary findings, explanation of the problem statement
+2) Finalized model
+3) Loose conclusions 
+
+
+This timeline should give us sufficient time to complete the paper by the final deadline. 
+
+
+# Conclusion
+	
+Being able to choose a topic that we are both highly passionate about will allow us to go above and beyond on this project. It is not only a highly relevant question, but one that also enables us to showcase our Bayesian Analysis skills that we have acquired throughout the semester on full display and be a key piece of research in our work portfolios.	
