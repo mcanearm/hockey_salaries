@@ -13,16 +13,18 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-def parse_column(col):
+def parse_column(colname, col):
+    # not the prettiest 
     logger.debug(f"Parsing {col}")
     try:
         return col.find("span")["data-num"]
     except TypeError:
         pass
+    except KeyError:
+        return col.find("span").text
 
-    if ":" in col.text:
-        m, s = col.text.split(":")
-        return int(m) * 60 + int(s)
+    if colname == 'EXTENSION':
+        return "✔" in col.text
     else:
         return col.text.strip()
 
@@ -30,19 +32,15 @@ def parse_column(col):
 def parse_row(row, header):
     logger.debug(f"{row}")
     cols = row.findAll("td")
-    return {colname: parse_column(col) for colname, col in zip(header, cols)}
+    return {colname: parse_column(colname, col) for colname, col in zip(header, cols)}
 
 
-def retrieve_dataframe_from_url(url, year, sleep_time=2):
+def retrieve_dataframe_from_url(url, year, params=None, sleep_time=2):
     pg = 1
     season_results = []
     while pg < 35:
-        params = {
-            "stats-season": year,
-            "pg": pg,
-            "display": "weightkg,heightcm,caphit-percent",
-        }
-        r = requests.get(url, params=params)
+        pg_params = {"pg": pg, **params}
+        r = requests.get(url + f"/{year}", params=pg_params)
         logger.info(r.url)
 
         time.sleep(sleep_time)
@@ -65,11 +63,19 @@ def retrieve_dataframe_from_url(url, year, sleep_time=2):
 
 
 if __name__ == "__main__":
+    import pathlib
+
     logging.basicConfig(level=logging.INFO)
 
     url = "https://www.capfriendly.com/browse/active"
-    years = range(2022, 2010, -1)
+    params = {
+        "display": "weightkg,heightcm,signing-status,expiry-year,performance-bonus,signing-bonus,caphit-percent,aav,length,base-salary,type,signing-age,signing-date,extension",
+        "hide": "team,handed,skater-stats,goalie-stats",
+    }
+    years = range(2009, 2023, 1)
 
+    result_dir = pathlib.Path("./data/salaries/")
+    result_dir.mkdir(exist_ok=True, parents=True)
     for year in years:
-        salary_data = retrieve_dataframe_from_url(url, year)
-        salary_data.to_csv(f'./data/salaries_{year}.csv', index=False)
+        salary_data = retrieve_dataframe_from_url(url, year, params)
+        salary_data.to_csv(f"{result_dir / str(year)}.csv", index=False)
