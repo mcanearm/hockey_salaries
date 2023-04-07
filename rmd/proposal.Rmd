@@ -1,6 +1,6 @@
 ---
 title: "Project Proposal"
-author: "Matt McAnear, Anthony Paiollil"
+author: "Matt McAnear, Anthony Paolillo"
 date: '2023-04-07'
 output: pdf_document
 ---
