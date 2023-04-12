@@ -72,7 +72,7 @@ if __name__ == "__main__":
         "display": "weightkg,heightcm,signing-status,expiry-year,performance-bonus,signing-bonus,caphit-percent,aav,length,base-salary,type,signing-age,signing-date,extension",
         "hide": "team,handed,skater-stats,goalie-stats",
     }
-    years = range(2009, 2023, 1)
+    years = range(2009, 2024, 1)
 
     result_dir = pathlib.Path("./data/salaries/")
     result_dir.mkdir(exist_ok=True, parents=True)

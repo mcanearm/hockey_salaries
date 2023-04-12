@@ -11,13 +11,12 @@ knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
 library(data.table)
 library(ggplot2)
-library(teamcolors)
 library(GGally)
 library(stringi)
 ```
 
 ```{r}
-salaries <- rbindlist(lapply(list.files('../data/salaries', full.names = TRUE), fread))[
+salaries <- rbindlist(lapply(list.files('./data/salaries', full.names = TRUE), fread))[
     POS != 'G'
 ]
 salaries$PLAYER <- trimws(gsub("^[0-9]+\\.", "", salaries$PLAYER))
@@ -44,10 +43,9 @@ salaries[, `:=` (
     )
 ]
 salaries <- salaries[SALARY > 0]
-salaries[, CNTRCT_AGE := SEASON - year(`SIGNING DATE`)]
 
-player_stats <- fread('../data/all_player_data.csv')[situation == 'all' & position != 'G']
-team_metadata <- fread('../data/team_metadata.csv')
+player_stats <- fread('./data/all_player_data.csv')[situation == 'all' & position != 'G']
+team_metadata <- fread('./data/team_metadata.csv')
 
 core_stats <- player_stats[,
     .(
@@ -58,22 +56,28 @@ core_stats <- player_stats[,
      )
 ]
 
-core_stats$team <- sapply(core_stats$team, function(x)
-    coalesce(switch(
+
+# core_stats$team <- 
+core_stats$team <- sapply(core_stats$team, function(x) {
+    new_team <- switch(
         x,
         S.J = 'SJS',
         T.B = 'TBL',
         N.J = "NJD",
         L.A = "LAK"
-    ),
-    x))
+    )
+    ifelse(is.null(new_team), x, new_team)
+})
+    
+salaries[order(SEASON), .SD[1], by = c('SIGNING DATE', 'merge_name')]
+salaries$contract_stat_season <- year(as.Date(salaries$`SIGNING DATE`)) - 1
 
 all_player_data <- merge(
     core_stats,
     salaries,
+    by.y = c('merge_name', 'contract_stat_season'),
     by.x = c('merge_name', 'season'),
-    by.y = c('merge_name', 'SEASON'),
-    all = TRUE
+    all = FALSE
 )
 full_df <- merge(
     all_player_data,
@@ -82,6 +86,10 @@ full_df <- merge(
     by.y = 'Abbr',
     all = FALSE
 )
+full_df$SEASON <- NULL
+
+
+write.csv(full_df, './data/full_data.csv', row.names = FALSE)
 
 ```
 

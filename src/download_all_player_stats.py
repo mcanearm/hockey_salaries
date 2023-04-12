@@ -28,4 +28,4 @@ if __name__ == "__main__":
     ]
 
     all_data_sets = [retrieve_url(url) for url in urls]
-    pd.concat(all_data_sets).to_csv("./all_player_data.csv")
+    pd.concat(all_data_sets).to_csv("./data/all_player_data.csv")
