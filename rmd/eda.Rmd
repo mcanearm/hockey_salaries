@@ -16,7 +16,7 @@ library(stringi)
 ```
 
 ```{r}
-salaries <- rbindlist(lapply(list.files('./data/salaries', full.names = TRUE), fread))[
+salaries <- rbindlist(lapply(list.files('../data/salaries', full.names = TRUE), fread))[
     POS != 'G'
 ]
 salaries$PLAYER <- trimws(gsub("^[0-9]+\\.", "", salaries$PLAYER))
@@ -44,8 +44,8 @@ salaries[, `:=` (
 ]
 salaries <- salaries[SALARY > 0]
 
-player_stats <- fread('./data/all_player_data.csv')[situation == 'all' & position != 'G']
-team_metadata <- fread('./data/team_metadata.csv')
+player_stats <- fread('../data/all_player_data.csv')[situation == 'all' & position != 'G']
+team_metadata <- fread('../data/team_metadata.csv')
 
 core_stats <- player_stats[,
     .(
@@ -69,13 +69,10 @@ core_stats$team <- sapply(core_stats$team, function(x) {
     ifelse(is.null(new_team), x, new_team)
 })
     
-salaries[order(SEASON), .SD[1], by = c('SIGNING DATE', 'merge_name')]
-salaries$contract_stat_season <- year(as.Date(salaries$`SIGNING DATE`)) - 1
-
 all_player_data <- merge(
     core_stats,
     salaries,
-    by.y = c('merge_name', 'contract_stat_season'),
+    by.y = c('merge_name', 'SEASON'),
     by.x = c('merge_name', 'season'),
     all = FALSE
 )
@@ -86,7 +83,6 @@ full_df <- merge(
     by.y = 'Abbr',
     all = FALSE
 )
-full_df$SEASON <- NULL
 
 
 write.csv(full_df, './data/full_data.csv', row.names = FALSE)
