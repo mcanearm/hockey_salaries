@@ -1,0 +1,187 @@
+---
+title: 
+    Hockey Salary Estimation
+
+# to produce blinded version set to 1
+blinded: 0
+
+authors: 
+- name: Matthew McAnear
+  # thanks: The authors gratefully acknowledge ...
+  affiliation: Department of Statistics, University of Michigan
+  
+- name: Anthony Paolillo
+  affiliation: Department of Statistics, University of Michigan
+  
+keywords:
+    NHL, salary, hierarchical modelling
+
+abstract: |
+  When NHL players and teams are negotiating contracts, player statistics are an obvious
+  bargaining point. Less obvious are the characteristics inherent to individual teams. In this paper,
+  we examine whether certain teams have different average salaries, controlling for individual statistics
+  contributions and statistics. Specifically, we want to see if the effective tax rates a team's players
+  are subject to, or if certain teams have a lower expected salary, given a certain player's statistics. 
+  We found that while certain teams have a lower average salary compared to others, effective tax rates
+  are not predictive of this change, and player statistics remain far and away the most important
+  predictor of player salary.
+
+bibliography: bibliography.bib
+output: rticles::asa_article
+---
+
+# Introduction
+
+ANTHONY HERE
+
+# Data Collection
+
+The data comes from two primary sources: Moneypuck (@tanner_moneypuckcom) for player statistics,
+and Capfriendly (@capfriendly_capfriendly_2023) for all salary data. 
+To gether the data, we built a scraper in Python using 
+`BeautifulSoup4` (@richardson_beautifulsoup_2007), `requests` (@requests), 
+and `pandas` (@team_pandas-devpandas_2023,`). This custom scraper (@mcanearm_hockey_salaries) 
+downloads one page of salary data at a time for each season. To avoid any issues of making too many
+requests to the particular website, we rate-limit to one requeset every 2 seconds. After a few minutes,
+salary info from 2009 to 2023 is collected.
+
+A similar scraper was built for Moneypuck. In this instance, the data for skaters is much more readily
+available, and all pages are easily downloaded either manually or, in our case, by simply iterating year
+by year and downloading all skater data using the `requests` package.
+
+Once all skaters and their salaries were downloaded and merged, this left us with ~11,500 contract and 
+season combinations, where a player's salary will repeat for multiple seasons, but their statistics
+will change season by season. Next, we limited to only the year 2016 and onward. This allows us to
+mitigate the issue of salaries generally increasing over time.
+CLEANING STEPS
+
+# Methdology
+
+# Results
+
+# Discussion
+
+# Conclusion
+
+\section{Verifications}
+\label{sec:verify}
+This section will be just long enough to illustrate what a full page of
+text looks like, for margins and spacing.
+
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+__With this spacing we have 30 lines per page.__
+
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+The quick brown fox jumped over the lazy dog.
+
+

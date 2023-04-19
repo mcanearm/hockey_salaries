@@ -45,14 +45,15 @@ salaries[, `:=` (
 salaries <- salaries[SALARY > 0]
 
 player_stats <- fread('../data/all_player_data.csv')[situation == 'all' & position != 'G']
+player_stats[, sum(is.na(I_F_dZoneGiveaways)), by = 'season']
 team_metadata <- fread('../data/team_metadata.csv')
+
 
 core_stats <- player_stats[,
     .(
         playerId, season, name, position, team, games_played, icetime, shifts, onIce_xGoalsPercentage, 
         offIce_xGoalsPercentage, penalties, faceoffsWon, penalityMinutes, penalityMinutesDrawn, 
-        shotsBlockedByPlayer, I_F_goals, I_F_primaryAssists, I_F_secondaryAssists, I_F_points,
-        I_F_hits, 'merge_name' = clean_name(name)
+        shotsBlockedByPlayer, I_F_goals, I_F_primaryAssists, I_F_secondaryAssists, I_F_points, I_F_dZoneGiveaways, I_F_hits, 'merge_name' = clean_name(name)
      )
 ]
 
@@ -85,7 +86,7 @@ full_df <- merge(
 )
 
 
-write.csv(full_df, './data/full_data.csv', row.names = FALSE)
+write.csv(full_df, '../data/full_data.csv', row.names = FALSE)
 
 ```
 
