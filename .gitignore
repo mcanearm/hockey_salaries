@@ -2,3 +2,11 @@
 launch.json
 tasks.json
 .Rproj.user
+*.pdf
+*.json
+data/
+*.gv
+.Rhistory
+.DS_Store
+*.pdf
+*.tex
